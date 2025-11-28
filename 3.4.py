@@ -71,7 +71,7 @@ print("Векторное хранилище успешно загружено!"
 
 retriever = vectorstore.as_retriever(
     search_type="similarity",
-    search_kwargs={"k": 100}
+    search_kwargs={"k": 10}
 )
 
 
@@ -128,12 +128,42 @@ rag_chain = (
 )
 
 
-# === ТЕСТОВЫЙ ЗАПРОС (чтобы что-то вывелось!) ===
-print("\n🔍 Выполняется тестовый запрос...\n")
-try:
-    question = "Что такое трансформеры в машинном обучении?"
-    print(f"Вопрос: {question}\n")
-    response = rag_chain.invoke(question)
-    print(f"Ответ:\n{response.content}")
-except Exception as e:
-    print(f"❌ Ошибка при выполнении RAG-запроса: {e}")
+def interactive_rag_qa():
+    """Интерактивная система вопросов-ответов"""
+    print("=== Интерактивная RAG-система для научных статей ArXiv ===")
+    print("Введите 'выход' для завершения\n")
+
+    while True:
+        question = input("Ваш вопрос: ").strip()
+
+        if question.lower() in ['выход', 'exit', 'quit']:
+            print("До свидания!")
+            break
+
+        if not question:
+            continue
+
+        try:
+            # Получаем релевантные документы
+            docs = retriever.invoke(question)
+            print(f"\n📚 Найдено релевантных документов: {len(docs)}")
+
+            # Генерируем ответ
+            response = rag_chain.invoke(question)
+            print(f"\n🤖 Ответ:\n{response.content}\n")
+
+            # Показываем источники
+            show_sources = input("Показать источники? (да/нет): ").strip().lower()
+            if show_sources in ['да', 'yes', 'y', 'д']:
+                print("\n📖 Источники:")
+                for i, doc in enumerate(docs[:3], 1):
+                    print(f"\n{i}. {doc.page_content[:200]}...")
+                    print(f"   Метаданные: {doc.metadata}")
+
+            print("\n" + "=" * 80 + "\n")
+
+        except Exception as e:
+            print(f"❌ Ошибка: {e}\n")
+
+
+interactive_rag_qa()
